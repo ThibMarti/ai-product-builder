@@ -6,7 +6,7 @@ An AI teaching assistant that answers questions about a biology course using **o
 
 The interesting part: this is really **two pipelines in one workflow** — one that ingests the course into the vector store, and one that serves students through a RAG agent.
 
-![Workflow canvas](assets/canvas.png)
+canvas.png
 
 ## Tech stack
 
