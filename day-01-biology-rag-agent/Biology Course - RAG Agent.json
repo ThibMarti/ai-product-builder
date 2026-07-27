@@ -1,0 +1,1018 @@
+{
+  "name": "Biology Course - RAG Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "969c24a3-4613-4c74-9c58-07f848ee14c2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appSdGoFdFgkaEVzh",
+          "mode": "list",
+          "cachedResultName": "D1C2 - Le Wagon",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJFVHpQOoMIhJlE",
+          "mode": "list",
+          "cachedResultName": "Course chapters",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh/tblJFVHpQOoMIhJlE"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "72e75002-ae55-4f1f-8914-4c8e8227a5f0",
+      "name": "Search records",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YdmTEYCu2UF9sAE3",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "6ba849ef-83fc-4619-9291-c6f4963484af",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "IurxsMsGWz9VvrvA",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        208
+      ],
+      "id": "bdd68ee4-8831-449c-9147-a81c57c40cad",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "014cVhPfZ4ELJfwx",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{$json.fields[\"Full content\"]}}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "chapter",
+                "value": "={{$json.fields.Chapter}}"
+              },
+              {
+                "name": "summary",
+                "value": "={{$json.fields.Summary}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        208
+      ],
+      "id": "c8089904-64bc-49b1-bd4d-642050a32c5b",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nI'm your teaching assistant in Biology. How can I help today?",
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "id": "359cedc3-de96-4066-9073-e4ae406e0f7d",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        768,
+        0
+      ],
+      "webhookId": "49df577d-1037-4abb-b802-85266540f3fe"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an expert biology course assistant.\n\nYour role is to help students understand the biology course by retrieving and explaining information from the course knowledge base.\n\nSTRICT RULES:\n- Do not answer course-related questions using your own knowledge.\n- For every course-related question, use the Supabase Vector Store tool before answering.\n- Use the retrieved course content as the only factual basis for your answer.\n- If the retrieved content is insufficient, clearly say that the course materials do not contain enough information.\n- For simple greetings or casual messages such as \"Hi\", \"Hello\", or \"Thanks\", respond naturally without using the tool.\n\nTOOL USAGE:\n- Use the Supabase Vector Store tool to retrieve the most relevant chunks from the course.\n- Make one retrieval call first.\n- After receiving the retrieved chunks, answer the user's question.\n- Only make one additional retrieval call if the first results are clearly insufficient.\n- Do not repeatedly search for the same information.\n- Do not call the tool again once enough information is available to answer.\n\nANSWER GUIDELINES:\n- Provide a clear and student-friendly answer.\n- Synthesize information across the retrieved chunks when relevant.\n- Mention the chapter name when it is available in the metadata.\n- Keep the answer concise unless the student asks for more detail."
+        }
+      },
+      "id": "0358d9c9-9890-4e2f-badf-297b7a102fc4",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1184,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "35d7191a-595e-45c5-a6f2-660cde5a8e4d",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "014cVhPfZ4ELJfwx",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "f55f5c66-e648-4349-8f98-018df5f9e8ab",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        992,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this tool to retrieve the most relevant course content from the Supabase vector database. Always use it to answer course-related questions.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 5,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1152,
+        208
+      ],
+      "id": "103dc14f-712a-4abd-9e9e-ca126b9fcf01",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "IurxsMsGWz9VvrvA",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        336
+      ],
+      "id": "b59fe430-da3b-4820-9cfb-0f5ca4463db9",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "014cVhPfZ4ELJfwx",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4a2832d9-6462-44d8-86ca-0bcefd5782f5",
+              "name": "Start time",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "b395ba80-e57f-4a8f-b16e-a23a547936b1",
+              "name": "Session ID",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "a23ebbb3-b806-4eb3-8900-130f6c7012f3",
+              "name": "User message",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        0
+      ],
+      "id": "00e6d3ec-cef6-424e-bf46-5e4fcf6f7244",
+      "name": "Prepare_Chat_Request"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1.3,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "0412ceb5-5c33-471d-82dc-6f5618f53e33",
+      "name": "Chat",
+      "webhookId": "913dfcab-dfc8-4609-ba63-620e4325f976"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "70e7da33-78d0-4695-a171-7b86a68353fb",
+              "name": "AI answer",
+              "value": "={{ $('AI Agent').item.json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "ac448d68-1f56-4bc6-8921-eb75756a00bc",
+              "name": "Message time",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "570b8d07-2bff-4292-bf72-73eb4c377f1a",
+              "name": "Time to generate (ms)",
+              "value": "={{ Math.round(Date.now() - new Date($('Prepare_Chat_Request').item.json[\"Start time\"]).getTime()) }}",
+              "type": "number"
+            },
+            {
+              "id": "9e81c5c8-0a94-4396-9cfa-149e535db68d",
+              "name": "Session ID",
+              "value": "={{ $('Prepare_Chat_Request').item.json[\"Session ID\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "a0dbf31a-d3bc-45a1-9d93-a33c8e6391a7",
+              "name": "Start time",
+              "value": "={{ $('Prepare_Chat_Request').item.json[\"Start time\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "68571b01-8663-452e-a8f3-156c92c15357",
+              "name": "User message",
+              "value": "={{ $('Prepare_Chat_Request').item.json[\"User message\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1680,
+        0
+      ],
+      "id": "9cb06076-122a-490d-ae73-3b85ff618760",
+      "name": "Prepare_Database_Record"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appSdGoFdFgkaEVzh",
+          "mode": "list",
+          "cachedResultName": "D1C2 - Le Wagon",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJyWZaSDK0Er5g",
+          "mode": "list",
+          "cachedResultName": "Conversations",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh/tblsJyWZaSDK0Er5g"
+        },
+        "filterByFormula": "={{ \"{n8n session ID} = '\" + $json[\"Session ID\"] + \"'\" }}",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1888,
+        0
+      ],
+      "id": "9177f8a9-8f2e-4725-b620-c80d824d56da",
+      "name": "Search records1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YdmTEYCu2UF9sAE3",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5e8b577f-013e-4ef4-b358-71ebb40bcb74",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2096,
+        0
+      ],
+      "id": "eccee415-8621-436d-954c-838ad911f57c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appSdGoFdFgkaEVzh",
+          "mode": "list",
+          "cachedResultName": "D1C2 - Le Wagon",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblsJyWZaSDK0Er5g",
+          "mode": "list",
+          "cachedResultName": "Conversations",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh/tblsJyWZaSDK0Er5g"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "n8n session ID": "={{ $('Prepare_Database_Record').item.json[\"Session ID\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Conversation ID",
+              "displayName": "Conversation ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AI generated title",
+              "displayName": "AI generated title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "n8n session ID",
+              "displayName": "n8n session ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Start time",
+              "displayName": "Start time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Messages",
+              "displayName": "Messages",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Messages count",
+              "displayName": "Messages count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Latest message time",
+              "displayName": "Latest message time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        96
+      ],
+      "id": "a4306bcd-6d01-4067-bb6e-0a7958ab7e26",
+      "name": "Create_Conversation",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YdmTEYCu2UF9sAE3",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appSdGoFdFgkaEVzh",
+          "mode": "list",
+          "cachedResultName": "D1C2 - Le Wagon",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcuOxjvB7aAp0cI",
+          "mode": "list",
+          "cachedResultName": "Messages",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh/tblcuOxjvB7aAp0cI"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Conversation": "={{ [$('Search records1').item.json.id] }}",
+            "User message": "={{ $('Prepare_Database_Record').item.json[\"User message\"] }}",
+            "AI answer": "={{ $('Prepare_Database_Record').item.json[\"AI answer\"] }}",
+            "Message time": "={{ $('Prepare_Database_Record').item.json[\"Message time\"] }}",
+            "Time to generate (ms)": "={{ $('Prepare_Database_Record').item.json[\"Time to generate (ms)\"] }}{{ 0 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Message time",
+              "displayName": "Message time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "User message",
+              "displayName": "User message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI answer",
+              "displayName": "AI answer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Summary (User message)",
+              "displayName": "Summary (User message)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Headline (User message)",
+              "displayName": "Headline (User message)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Time to generate (ms)",
+              "displayName": "Time to generate (ms)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Conversation",
+              "displayName": "Conversation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        -96
+      ],
+      "id": "127353bd-5f12-43ad-ba85-779039ff3236",
+      "name": "Create_Message_From_Existing_Conversation",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YdmTEYCu2UF9sAE3",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appSdGoFdFgkaEVzh",
+          "mode": "list",
+          "cachedResultName": "D1C2 - Le Wagon",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcuOxjvB7aAp0cI",
+          "mode": "list",
+          "cachedResultName": "Messages",
+          "cachedResultUrl": "https://airtable.com/appSdGoFdFgkaEVzh/tblcuOxjvB7aAp0cI"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Conversation": "={{ [$('Create_Conversation').item.json.id] }}",
+            "User message": "={{ $('Prepare_Database_Record').item.json[\"User message\"] }}",
+            "AI answer": "={{ $('Prepare_Database_Record').item.json[\"AI answer\"] }}",
+            "Message time": "={{ $('Prepare_Database_Record').item.json[\"Message time\"] }}",
+            "Time to generate (ms)": "={{ $('Prepare_Database_Record').item.json[\"Time to generate (ms)\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Message time",
+              "displayName": "Message time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "User message",
+              "displayName": "User message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI answer",
+              "displayName": "AI answer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Summary (User message)",
+              "displayName": "Summary (User message)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Headline (User message)",
+              "displayName": "Headline (User message)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Time to generate (ms)",
+              "displayName": "Time to generate (ms)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Conversation",
+              "displayName": "Conversation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2512,
+        96
+      ],
+      "id": "03dc226a-5d50-4e06-9d7b-7743aada7d0f",
+      "name": "Create_Message_From_New_Conversation",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YdmTEYCu2UF9sAE3",
+          "name": "Airtable account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Prepare_Chat_Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare_Chat_Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat": {
+      "main": [
+        [
+          {
+            "node": "Prepare_Database_Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare_Database_Record": {
+      "main": [
+        [
+          {
+            "node": "Search records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create_Message_From_Existing_Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create_Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create_Conversation": {
+      "main": [
+        [
+          {
+            "node": "Create_Message_From_New_Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "b437c9d7-9e2a-49b3-927b-84633254288a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a49dacd26b0fdc1458020e1dc162d3bc265c1c27a0e11ad71b1997065dc54da5"
+  },
+  "nodeGroups": [],
+  "id": "XoR0eogqVxjiOlhf",
+  "tags": []
+}
